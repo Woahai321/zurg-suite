@@ -1,0 +1,119 @@
+{% macro input_field(type="text", name="", label="", value="", placeholder="", required=false, error="", classes="") %}
+<div class="form-group mb-4">
+    {% if label %}
+    <label for="{{ name }}" class="block text-sm font-medium text-gray-200 mb-1">
+        {{ label }}{% if required %}<span class="text-red-500 ml-1">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <div class="relative">
+        <input 
+            type="{{ type }}" 
+            name="{{ name }}" 
+            id="{{ name }}"
+            value="{{ value }}"
+            placeholder="{{ placeholder }}"
+            {% if required %}required{% endif %}
+            class="w-full px-4 py-2 bg-secondary-800 border {% if error %}border-red-500{% else %}border-secondary-600{% endif %} rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-white placeholder-gray-400 {{ classes }}"
+        >
+        {% if error %}
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <p class="mt-1 text-sm text-red-500">{{ error }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro select_field(name="", label="", options=[], selected="", required=false, error="", classes="") %}
+<div class="form-group mb-4">
+    {% if label %}
+    <label for="{{ name }}" class="block text-sm font-medium text-gray-200 mb-1">
+        {{ label }}{% if required %}<span class="text-red-500 ml-1">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <div class="relative">
+        <select 
+            name="{{ name }}" 
+            id="{{ name }}"
+            {% if required %}required{% endif %}
+            class="w-full px-4 py-2 bg-secondary-800 border {% if error %}border-red-500{% else %}border-secondary-600{% endif %} rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-white {{ classes }}"
+        >
+            {% for option in options %}
+            <option value="{{ option.value }}" {% if option.value == selected %}selected{% endif %}>
+                {{ option.label }}
+            </option>
+            {% endfor %}
+        </select>
+        {% if error %}
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <p class="mt-1 text-sm text-red-500">{{ error }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro textarea_field(name="", label="", value="", placeholder="", rows=4, required=false, error="", classes="") %}
+<div class="form-group mb-4">
+    {% if label %}
+    <label for="{{ name }}" class="block text-sm font-medium text-gray-200 mb-1">
+        {{ label }}{% if required %}<span class="text-red-500 ml-1">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <div class="relative">
+        <textarea 
+            name="{{ name }}" 
+            id="{{ name }}"
+            rows="{{ rows }}"
+            placeholder="{{ placeholder }}"
+            {% if required %}required{% endif %}
+            class="w-full px-4 py-2 bg-secondary-800 border {% if error %}border-red-500{% else %}border-secondary-600{% endif %} rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-white placeholder-gray-400 {{ classes }}"
+        >{{ value }}</textarea>
+        {% if error %}
+        <div class="absolute top-0 right-0 mt-2 mr-3">
+            <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        <p class="mt-1 text-sm text-red-500">{{ error }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro checkbox_field(name="", label="", checked=false, required=false, error="", classes="") %}
+<div class="form-group mb-4">
+    <label class="inline-flex items-center">
+        <input 
+            type="checkbox" 
+            name="{{ name }}" 
+            id="{{ name }}"
+            {% if checked %}checked{% endif %}
+            {% if required %}required{% endif %}
+            class="form-checkbox h-5 w-5 text-primary-600 border-secondary-600 rounded focus:ring-primary-500 focus:ring-offset-0 bg-secondary-800 {{ classes }}"
+        >
+        <span class="ml-2 text-sm text-gray-200">{{ label }}{% if required %}<span class="text-red-500 ml-1">*</span>{% endif %}</span>
+    </label>
+    {% if error %}
+    <p class="mt-1 text-sm text-red-500">{{ error }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro form_group(title="", subtitle="", classes="") %}
+<div class="form-group bg-secondary-800 rounded-lg p-6 mb-6 {{ classes }}">
+    {% if title %}
+    <h3 class="text-lg font-medium text-white mb-1">{{ title }}</h3>
+    {% endif %}
+    {% if subtitle %}
+    <p class="text-sm text-gray-400 mb-4">{{ subtitle }}</p>
+    {% endif %}
+    {{ caller() }}
+</div>
+{% endmacro %} 

@@ -1,0 +1,17 @@
+{
+  "name": "zurgsite",
+  "version": "1.0.0",
+  "description": "A secure web interface for controlling system operations through a modern, dark-mode UI.",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^4.0.4"
+  }
+}

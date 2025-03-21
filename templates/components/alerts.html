@@ -1,0 +1,132 @@
+{% macro alert(type="info", message="", dismissible=false, icon=true, classes="") %}
+{% set alert_styles = {
+    'info': {
+        'bg': 'bg-blue-500/10',
+        'border': 'border-blue-500/20',
+        'text': 'text-blue-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+    },
+    'success': {
+        'bg': 'bg-green-500/10',
+        'border': 'border-green-500/20',
+        'text': 'text-green-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+    },
+    'warning': {
+        'bg': 'bg-yellow-500/10',
+        'border': 'border-yellow-500/20',
+        'text': 'text-yellow-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />'
+    },
+    'error': {
+        'bg': 'bg-red-500/10',
+        'border': 'border-red-500/20',
+        'text': 'text-red-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+    }
+} %}
+
+<div class="alert relative rounded-lg border p-4 {{ alert_styles[type]['bg'] }} {{ alert_styles[type]['border'] }} {{ classes }}"
+     role="alert">
+    <div class="flex">
+        {% if icon %}
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 {{ alert_styles[type]['text'] }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {{ alert_styles[type]['icon'] | safe }}
+            </svg>
+        </div>
+        {% endif %}
+        <div class="ml-3 flex-1">
+            <p class="text-sm {{ alert_styles[type]['text'] }}">{{ message }}</p>
+        </div>
+        {% if dismissible %}
+        <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+                <button type="button" 
+                        class="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 {{ alert_styles[type]['text'] }} hover:{{ alert_styles[type]['bg'] }} focus:ring-{{ type }}-500 focus:ring-offset-{{ type }}-100"
+                        onclick="this.closest('.alert').remove()">
+                    <span class="sr-only">Dismiss</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro banner(type="info", title="", message="", action_text="", action_url="", dismissible=false, classes="") %}
+{% set banner_styles = {
+    'info': {
+        'bg': 'bg-blue-500/10',
+        'border': 'border-blue-500/20',
+        'text': 'text-blue-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+    },
+    'success': {
+        'bg': 'bg-green-500/10',
+        'border': 'border-green-500/20',
+        'text': 'text-green-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'
+    },
+    'warning': {
+        'bg': 'bg-yellow-500/10',
+        'border': 'border-yellow-500/20',
+        'text': 'text-yellow-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />'
+    },
+    'error': {
+        'bg': 'bg-red-500/10',
+        'border': 'border-red-500/20',
+        'text': 'text-red-400',
+        'icon': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+    }
+} %}
+
+<div class="banner relative {{ banner_styles[type]['bg'] }} {{ banner_styles[type]['border'] }} border-l-4 p-4 {{ classes }}"
+     role="alert">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <svg class="h-5 w-5 {{ banner_styles[type]['text'] }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {{ banner_styles[type]['icon'] | safe }}
+            </svg>
+        </div>
+        <div class="ml-3">
+            {% if title %}
+            <h3 class="text-sm font-medium {{ banner_styles[type]['text'] }}">
+                {{ title }}
+            </h3>
+            {% endif %}
+            <div class="mt-2 text-sm {{ banner_styles[type]['text'] }}">
+                <p>{{ message }}</p>
+            </div>
+            {% if action_text and action_url %}
+            <div class="mt-4">
+                <div class="-mx-2 -my-1.5 flex">
+                    <a href="{{ action_url }}"
+                       class="rounded-md {{ banner_styles[type]['bg'] }} px-2 py-1.5 text-sm font-medium {{ banner_styles[type]['text'] }} hover:{{ banner_styles[type]['bg'] }} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-{{ type }}-50 focus:ring-{{ type }}-600">
+                        {{ action_text }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% if dismissible %}
+        <div class="ml-auto pl-3">
+            <div class="-mx-1.5 -my-1.5">
+                <button type="button"
+                        class="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 {{ banner_styles[type]['text'] }} hover:{{ banner_styles[type]['bg'] }}"
+                        onclick="this.closest('.banner').remove()">
+                    <span class="sr-only">Dismiss</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %} 

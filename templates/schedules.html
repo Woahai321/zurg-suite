@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block header %}Scheduled Tasks{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Scheduled Tasks</h1>
+            <p class="text-gray-400 mt-1">Configure automated schedules for system actions</p>
+        </div>
+        <div class="flex gap-2">
+            <button id="import-env-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import from .env
+            </button>
+            <button id="export-env-btn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export to .env
+            </button>
+        </div>
+    </div>
+
+    <!-- Schedule Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Schedule Card Template - will be repeated for each action -->
+        {% for action in [
+            {
+                'id': 'remount_downloads',
+                'name': 'Remount Downloads',
+                'description': 'Schedule automatic remounting of downloads directory'
+            },
+            {
+                'id': 'reboot_worker',
+                'name': 'Worker Pool Reboot',
+                'description': 'Schedule automatic worker pool maintenance reboots'
+            },
+            {
+                'id': 'jellyfin_scan',
+                'name': 'Jellyfin Library Scan',
+                'description': 'Schedule automatic Jellyfin library scans'
+            }
+        ] %}
+        <div class="bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6 border border-gray-800" data-task-name="{{ action.id }}">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-white">{{ action.name }}</h3>
+                    <p class="text-sm text-gray-400 mt-1">{{ action.description }}</p>
+                </div>
+                <div class="flex items-center">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer schedule-enabled">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Schedule Type</label>
+                        <select class="schedule-type-select bg-gray-800 text-white rounded-lg w-full px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                            <option value="simple">Simple Schedule</option>
+                            <option value="cron">Cron Expression</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="simple-schedule">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Frequency</label>
+                            <select class="frequency-select bg-gray-800 text-white rounded-lg w-full px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                                <option value="hourly">Hourly</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="custom">Custom Hours</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Time</label>
+                            <input type="time" class="time-input bg-gray-800 text-white rounded-lg w-full px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        </div>
+                        <div class="custom-hours hidden">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Hours Interval</label>
+                            <input type="number" min="1" max="24" value="12" class="hours-input bg-gray-800 text-white rounded-lg w-full px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        </div>
+                    </div>
+                    <div class="weekly-options hidden mt-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Days of Week</label>
+                        <div class="flex flex-wrap gap-2">
+                            {% for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" class="form-checkbox text-purple-600 rounded border-gray-700 bg-gray-800" value="{{ loop.index0 }}">
+                                <span class="ml-2 text-sm text-gray-300">{{ day }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cron-schedule hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Cron Expression</label>
+                        <input type="text" placeholder="*/12 * * * *" class="cron-input bg-gray-800 text-white rounded-lg w-full px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        <p class="text-xs text-gray-500 mt-1">Example: */12 * * * * (every 12 hours)</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-4">
+                    <div class="text-sm text-gray-400 last-run hidden">
+                        Last run: <span class="last-run-time"></span>
+                    </div>
+                    <button class="save-schedule px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                        Save Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load existing schedules
+    loadSchedules();
+
+    // Handle schedule type changes
+    document.querySelectorAll('.schedule-type-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const card = this.closest('.bg-gray-900');
+            const simpleSchedule = card.querySelector('.simple-schedule');
+            const cronSchedule = card.querySelector('.cron-schedule');
+            
+            if (this.value === 'simple') {
+                simpleSchedule.classList.remove('hidden');
+                cronSchedule.classList.add('hidden');
+            } else {
+                simpleSchedule.classList.add('hidden');
+                cronSchedule.classList.remove('hidden');
+            }
+        });
+    });
+
+    // Handle frequency changes
+    document.querySelectorAll('.frequency-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const card = this.closest('.bg-gray-900');
+            const weeklyOptions = card.querySelector('.weekly-options');
+            const customHours = card.querySelector('.custom-hours');
+            const timeInput = card.querySelector('.time-input').parentElement;
+            
+            weeklyOptions.classList.toggle('hidden', this.value !== 'weekly');
+            customHours.classList.toggle('hidden', this.value !== 'custom');
+            timeInput.classList.toggle('hidden', this.value === 'custom');
+        });
+    });
+
+    // Handle save schedule
+    document.querySelectorAll('.save-schedule').forEach(button => {
+        button.addEventListener('click', async function() {
+            try {
+                const card = this.closest('.bg-gray-900');
+                const taskName = card.dataset.taskName;
+                const scheduleType = card.querySelector('.schedule-type-select').value;
+                const enabled = card.querySelector('.schedule-enabled').checked;
+                let scheduleData = {
+                    task_name: taskName,
+                    enabled: enabled,
+                    type: scheduleType
+                };
+
+                if (scheduleType === 'simple') {
+                    const frequency = card.querySelector('.frequency-select').value;
+                    scheduleData.frequency = frequency;
+                    
+                    if (frequency === 'weekly') {
+                        const selectedDays = Array.from(card.querySelectorAll('.weekly-options input[type="checkbox"]:checked'))
+                            .map(cb => parseInt(cb.value));
+                        if (selectedDays.length === 0) {
+                            throw new Error('Please select at least one day for weekly schedule');
+                        }
+                        scheduleData.days = selectedDays;
+                        const time = card.querySelector('.time-input').value;
+                        if (!time) {
+                            throw new Error('Please select a time for the schedule');
+                        }
+                        scheduleData.time = time;
+                    } else if (frequency === 'custom') {
+                        const hours = parseInt(card.querySelector('.hours-input').value);
+                        if (isNaN(hours) || hours < 1 || hours > 24) {
+                            throw new Error('Please enter a valid number of hours (1-24)');
+                        }
+                        scheduleData.hours = hours;
+                    } else if (frequency === 'daily') {
+                        const time = card.querySelector('.time-input').value;
+                        if (!time) {
+                            throw new Error('Please select a time for the schedule');
+                        }
+                        scheduleData.time = time;
+                    } else if (frequency === 'hourly') {
+                        // For hourly schedules, we'll use the selected time's minutes
+                        const time = card.querySelector('.time-input').value;
+                        scheduleData.time = time || '00:00';  // Only default to 00:00 if no time selected for hourly
+                    }
+                } else {
+                    const cronExpression = card.querySelector('.cron-input').value.trim();
+                    if (!cronExpression) {
+                        throw new Error('Please enter a cron expression');
+                    }
+                    scheduleData.cron = cronExpression;
+                }
+
+                console.log('Saving schedule:', scheduleData); // Debug log
+
+                const response = await fetch('/api/schedules/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(scheduleData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Schedule saved successfully', 'success');
+                    loadSchedules(); // Reload schedules to update UI
+                } else {
+                    throw new Error(result.error || 'Failed to save schedule');
+                }
+            } catch (error) {
+                console.error('Error saving schedule:', error);
+                showNotification(error.message || 'Failed to save schedule', 'error');
+            }
+        });
+    });
+
+    // Add listeners for import/export buttons
+    document.getElementById('import-env-btn')?.addEventListener('click', importFromEnv);
+    document.getElementById('export-env-btn')?.addEventListener('click', exportToEnv);
+    
+    // Handle import from .env file
+    function importFromEnv() {
+        if (confirm('Import schedules from .env file? This may overwrite existing schedules.')) {
+            fetch('/api/schedules/import_from_env', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('success', data.message);
+                    // Reload the page to show updated schedules
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast('error', data.error || 'Failed to import schedules');
+                }
+            })
+            .catch(error => {
+                console.error('Error importing schedules:', error);
+                showToast('error', 'Network error while importing schedules');
+            });
+        }
+    }
+    
+    // Handle export to .env file
+    function exportToEnv() {
+        if (confirm('Export all schedules to .env file? This will overwrite any existing schedule configurations in the file.')) {
+            fetch('/api/schedules/export_to_env', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('success', data.message);
+                } else {
+                    showToast('error', data.error || 'Failed to export schedules');
+                }
+            })
+            .catch(error => {
+                console.error('Error exporting schedules:', error);
+                showToast('error', 'Network error while exporting schedules');
+            });
+        }
+    }
+    
+    // Show toast notification
+    function showToast(type, message) {
+        const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) return;
+        
+        const toast = document.createElement('div');
+        toast.className = `toast flex items-center space-x-3 hover-lift show`;
+        
+        // Set icon based on type
+        const iconContainer = document.createElement('span');
+        iconContainer.className = 'toast-icon';
+        
+        let iconSvg = '';
+        if (type === 'success') {
+            iconSvg = `<svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+        } else if (type === 'error') {
+            iconSvg = `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+        } else {
+            iconSvg = `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        }
+        
+        iconContainer.innerHTML = iconSvg;
+        toast.appendChild(iconContainer);
+        
+        // Add message
+        const messageElement = document.createElement('span');
+        messageElement.className = 'toast-message';
+        messageElement.textContent = message;
+        toast.appendChild(messageElement);
+        
+        // Add close button
+        const closeButton = document.createElement('button');
+        closeButton.className = 'ml-auto text-gray-400 hover:text-white';
+        closeButton.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+        closeButton.onclick = function() { toast.remove(); };
+        toast.appendChild(closeButton);
+        
+        toastContainer.appendChild(toast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5001);
+    }
+});
+
+async function loadSchedules() {
+    try {
+        const response = await fetch('/api/schedules');
+        const schedules = await response.json();
+        
+        schedules.forEach(schedule => {
+            const card = document.querySelector(`[data-task-name="${schedule.task_name}"]`);
+            if (card) {
+                // Set enabled state
+                card.querySelector('.schedule-enabled').checked = schedule.enabled;
+                
+                // Set schedule type
+                const typeSelect = card.querySelector('.schedule-type-select');
+                typeSelect.value = schedule.schedule_type;
+                typeSelect.dispatchEvent(new Event('change'));
+                
+                if (schedule.schedule_type === 'simple') {
+                    // Set frequency
+                    const frequencySelect = card.querySelector('.frequency-select');
+                    frequencySelect.value = schedule.frequency;
+                    frequencySelect.dispatchEvent(new Event('change'));
+                    
+                    // Set time or hours based on frequency
+                    if (schedule.frequency === 'custom') {
+                        card.querySelector('.hours-input').value = schedule.hours_interval;
+                    } else if (schedule.frequency === 'weekly') {
+                        // Set selected days
+                        schedule.days.forEach(day => {
+                            card.querySelector(`.weekly-options input[value="${day}"]`).checked = true;
+                        });
+                        card.querySelector('.time-input').value = schedule.time;
+                    } else {
+                        card.querySelector('.time-input').value = schedule.time;
+                    }
+                } else {
+                    // Set cron expression
+                    card.querySelector('.cron-input').value = schedule.cron_expression;
+                }
+                
+                // Update last run time if available
+                if (schedule.last_run) {
+                    const lastRunDiv = card.querySelector('.last-run');
+                    const lastRunTime = card.querySelector('.last-run-time');
+                    lastRunDiv.classList.remove('hidden');
+                    lastRunTime.textContent = new Date(schedule.last_run).toLocaleString();
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error loading schedules:', error);
+        showNotification('Failed to load schedules', 'error');
+    }
+}
+
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg text-white ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    } transition-opacity duration-300`;
+    notification.textContent = message;
+    
+    // Add to document
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,73 @@
+{% macro mobile_nav() %}
+<!-- Mobile Navigation Trigger -->
+<button id="mobile-nav-trigger" class="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-secondary-800 text-white hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+</button>
+
+<!-- Mobile Navigation Overlay -->
+<div id="mobile-nav-overlay" class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 hidden" aria-hidden="true"></div>
+
+<!-- Mobile Navigation Menu -->
+<div id="mobile-nav" class="lg:hidden fixed inset-y-0 left-0 w-64 bg-secondary-900 transform -translate-x-full transition-transform duration-300 ease-in-out z-50">
+    <div class="flex flex-col h-full">
+        <!-- Logo -->
+        <div class="p-4 border-b border-secondary-800">
+            <div class="flex items-center space-x-3">
+                <img src="{{ config['SITE_LOGO_PATH'] }}" class="h-8 w-8" alt="Logo">
+                <span class="text-lg font-semibold text-white">SeaFin Admin</span>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+            <a href="{{ url_for('dashboard') }}" 
+               class="flex items-center px-2 py-2 text-base font-medium rounded-lg {% if request.endpoint == 'dashboard' %}bg-primary-600 text-white{% else %}text-gray-300 hover:bg-primary-600 hover:text-white{% endif %}">
+                <svg class="mr-4 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('view_schedules') }}" 
+               class="flex items-center px-2 py-2 text-base font-medium rounded-lg {% if request.endpoint == 'view_schedules' %}bg-primary-600 text-white{% else %}text-gray-300 hover:bg-primary-600 hover:text-white{% endif %}">
+                <svg class="mr-4 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Schedules
+            </a>
+
+            <a href="{{ url_for('view_logs') }}" 
+               class="flex items-center px-2 py-2 text-base font-medium rounded-lg {% if request.endpoint == 'view_logs' %}bg-primary-600 text-white{% else %}text-gray-300 hover:bg-primary-600 hover:text-white{% endif %}">
+                <svg class="mr-4 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Logs
+            </a>
+        </nav>
+
+        <!-- User Menu -->
+        <div class="p-4 border-t border-secondary-800">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="h-8 w-8 rounded-full bg-primary-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-white">Admin</span>
+                        <span class="text-xs text-gray-500">Administrator</span>
+                    </div>
+                </div>
+                <a href="/logout" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %} 

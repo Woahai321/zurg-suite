@@ -1,0 +1,108 @@
+/* Desktop styles - ensure sidebar and main content are properly positioned */
+@media (min-width: 769px) {
+    .sidebar {
+        transform: none !important; /* Always show sidebar on desktop */
+        z-index: 30;
+    }
+    
+    .main-content {
+        margin-left: 16rem !important; /* 64 * 0.25rem = 16rem */
+        width: calc(100% - 16rem);
+    }
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    /* Ensure the menu button is always visible and properly positioned */
+    .menu-toggle-btn {
+        position: fixed !important;
+        z-index: 9999 !important;
+        top: 1rem !important;
+        left: 1rem !important;
+        background-color: rgba(31, 41, 55, 0.9) !important; /* Darker background for better visibility */
+    }
+    
+    /* Make the toggle button more prominent when the menu is open */
+    .menu-toggle-btn[aria-expanded="true"] {
+        background-color: rgba(147, 51, 234, 0.8) !important; /* Purple background when active */
+        box-shadow: 0 0 15px rgba(147, 51, 234, 0.3) !important; /* Add a glow effect */
+    }
+    
+    /* Prevent content scroll when menu is open */
+    body.menu-open {
+        overflow: hidden;
+    }
+    
+    /* Ensure sidebar has proper z-index and full height */
+    .sidebar {
+        height: 100vh !important;
+        width: 80% !important;
+        max-width: 300px !important;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        transform: translateX(-100%); /* Hide by default on mobile */
+        padding-top: 0 !important; /* Reset top padding */
+    }
+    
+    .sidebar.open {
+        transform: translateX(0); /* Show when open */
+    }
+    
+    /* Adjust logo spacing when sidebar is open in mobile */
+    .sidebar.open .logo-container {
+        margin-top: 3.5rem !important; /* Add extra space at top when menu is open */
+        padding-top: 0.5rem !important;
+    }
+    
+    /* Make sure content doesn't overlap with the menu button */
+    .main-content {
+        padding-top: 4rem !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Improve mobile touch targets by adding more spacing */
+    .sidebar nav a {
+        padding: 0.75rem 1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Add space between logo and navigation items */
+    .sidebar nav {
+        margin-top: 0.5rem !important;
+    }
+}
+
+/* Fix for devices in landscape mode */
+@media (max-width: 896px) and (orientation: landscape) {
+    .sidebar {
+        height: 100% !important;
+        overflow-y: scroll;
+    }
+    
+    /* Special handling for landscape mode to prevent overlap */
+    .sidebar.open .logo-container {
+        margin-top: 3rem !important;
+    }
+}
+
+/* Animation for the burger menu */
+.menu-toggle-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.menu-toggle-btn[aria-expanded="true"] svg {
+    transform: rotate(90deg);
+}
+
+/* Mobile menu spacer */
+.mobile-menu-spacer {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .open .mobile-menu-spacer {
+        display: block;
+        min-height: 3.5rem;
+    }
+} 

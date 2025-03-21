@@ -1,0 +1,15 @@
+flask==2.3.3
+werkzeug==2.3.7
+flask-login==0.6.2
+python-dotenv==1.0.0
+seleniumbase==4.22.3
+gunicorn==21.2.0
+python-jose==3.3.0
+flask-cors==4.0.0
+
+# Scheduling requirements
+APScheduler==3.10.1
+pytz==2023.3
+Flask-SQLAlchemy==3.0.5
+flask-socketio==5.3.6
+python-socketio==5.9.0 

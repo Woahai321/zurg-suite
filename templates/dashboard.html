@@ -1,0 +1,849 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/actions.js') }}"></script>
+<script>
+// Make triggerAction globally available
+window.triggerAction = async function(action) {
+    const button = document.querySelector(`button[data-action="${action}"]`);
+    if (!button || button.disabled) return;
+
+    try {
+        // Disable button and show loading state
+        button.disabled = true;
+        const content = button.querySelector('.button-content');
+        const loading = button.querySelector('.button-loading');
+        
+        // Show loading spinner
+        if (content && loading) {
+            content.style.opacity = '0';
+            loading.style.opacity = '1';
+        }
+
+        // Make the API call
+        const response = await fetch(`/trigger/${action}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        // Handle the response
+        if (result.success) {
+            // Show success state
+            button.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+            button.classList.add('bg-green-600', 'hover:bg-green-700');
+            if (content) {
+                content.innerHTML = `
+                    <span>Success</span>
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                `;
+                content.style.opacity = '1';
+            }
+            if (loading) {
+                loading.style.opacity = '0';
+            }
+
+            // Add success notification
+            if (typeof addNotification === 'function') {
+                addNotification(`${action.replace(/_/g, ' ')} completed successfully`, 'success');
+            }
+
+            // Trigger confetti animation
+            fireConfetti(button);
+
+            // Reset to original state after 2 seconds
+            setTimeout(() => {
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                if (content) {
+                    const originalContent = `
+                        <span>${button.getAttribute('data-original-text') || 'Trigger'}</span>
+                        <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    `;
+                    content.innerHTML = originalContent;
+                }
+                button.disabled = false;
+            }, 2000);
+        } else {
+            // Show error state
+            button.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+            button.classList.add('bg-red-600', 'hover:bg-red-700');
+            if (content) {
+                content.innerHTML = `
+                    <span>Failed</span>
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                `;
+                content.style.opacity = '1';
+            }
+            if (loading) {
+                loading.style.opacity = '0';
+            }
+
+            // Add error notification
+            if (typeof addNotification === 'function') {
+                addNotification(result.error || 'Action failed', 'error');
+            }
+
+            // Reset to original state after 2 seconds
+            setTimeout(() => {
+                button.classList.remove('bg-red-600', 'hover:bg-red-700');
+                button.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                if (content) {
+                    const originalContent = `
+                        <span>${button.getAttribute('data-original-text') || 'Trigger'}</span>
+                        <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    `;
+                    content.innerHTML = originalContent;
+                }
+                button.disabled = false;
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        // Show error state
+        button.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+        button.classList.add('bg-red-600', 'hover:bg-red-700');
+        if (content) {
+            content.innerHTML = `
+                <span>Error</span>
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            `;
+            content.style.opacity = '1';
+        }
+        if (loading) {
+            loading.style.opacity = '0';
+        }
+
+        // Add error notification
+        if (typeof addNotification === 'function') {
+            addNotification(`Error: ${error.message}`, 'error');
+        }
+
+        // Reset to original state after 2 seconds
+        setTimeout(() => {
+            button.classList.remove('bg-red-600', 'hover:bg-red-700');
+            button.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            if (content) {
+                const originalContent = `
+                    <span>${button.getAttribute('data-original-text') || 'Trigger'}</span>
+                    <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                `;
+                content.innerHTML = originalContent;
+            }
+            button.disabled = false;
+        }, 2000);
+    }
+};
+
+// Store original button text when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const actionButtons = document.querySelectorAll('.action-button');
+    actionButtons.forEach(button => {
+        const textElement = button.querySelector('.button-content span');
+        if (textElement) {
+            button.setAttribute('data-original-text', textElement.textContent);
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block breadcrumb_title %}Control Dashboard{% endblock %}
+{% block header %}Control Dashboard{% endblock %}
+
+{% block content %}
+<!-- Activity Log Notifications -->
+<div class="fixed top-4 right-4 z-50">
+    <div class="relative">
+        <button id="notification-toggle" 
+                class="p-2 rounded-lg bg-gray-900 bg-opacity-50 backdrop-blur-lg border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20 relative">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-purple-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+        </button>
+        
+        <!-- Activity Log Dropdown -->
+        <div id="notification-dropdown" class="hidden absolute right-0 mt-2 w-96 bg-gray-900 bg-opacity-90 backdrop-blur-lg rounded-lg shadow-lg border border-gray-800 overflow-hidden">
+            <div class="p-4 border-b border-gray-800">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-white">Activity Log</h3>
+                    <button id="clear-notifications" class="text-sm text-gray-400 hover:text-white transition-colors duration-200">Clear All</button>
+                </div>
+            </div>
+            <div id="notification-list" class="max-h-96 overflow-y-auto">
+                <!-- Notifications will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="fixed top-0 left-0 w-full h-1 bg-gray-800 z-50">
+    <div id="progress-bar" class="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 w-0"></div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="space-y-8">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Workers Panel -->
+        <div class="stats-card group bg-secondary-800/80 backdrop-blur-xl rounded-xl p-6 border border-secondary-700 transform transition-all duration-300 hover:scale-[1.02] hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <div class="group relative">
+                        <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300 transition-colors duration-200">Workers</p>
+                    </div>
+                    <p class="text-2xl font-bold text-white mt-1 group-hover:text-purple-400 transition-colors duration-300">
+                        <span id="total-workers" class="skeleton-text">0</span>
+                        <span class="text-sm font-normal text-gray-400">Total</span>
+                    </p>
+                </div>
+                <div class="h-12 w-12 rounded-lg bg-purple-500/20 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-secondary-700/50 rounded-lg p-3 hover:bg-secondary-700/70 transition-all duration-200 group/stat hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10">
+                    <div class="group relative">
+                        <div class="text-sm text-gray-400 group-hover/stat:text-gray-300">Running</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="text-lg font-semibold text-purple-400 skeleton-text group-hover/stat:text-purple-300" id="running-workers">0</div>
+                    </div>
+                </div>
+                <div class="bg-secondary-700/50 rounded-lg p-3 hover:bg-secondary-700/70 transition-all duration-200 group/stat hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10">
+                    <div class="group relative">
+                        <div class="text-sm text-gray-400 group-hover/stat:text-gray-300">Free</div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="text-lg font-semibold text-gray-300 skeleton-text group-hover/stat:text-purple-300" id="free-workers">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="stats-card group bg-secondary-800/80 backdrop-blur-xl rounded-xl p-6 border border-secondary-700 transform transition-all duration-300 hover:scale-[1.02] hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <div class="group relative">
+                        <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300 transition-colors duration-200">Zurg container Health</p>
+                    </div>
+                    <div class="flex items-center">
+                        <p class="text-2xl font-bold text-white mt-1 group-hover:text-purple-400 transition-colors duration-300">
+                            <span id="memory-usage" class="skeleton-text">-</span>
+                            <span class="text-sm font-normal text-gray-400">% Usage</span>
+                        </p>
+                        </div>
+                    </div>
+                <div class="h-12 w-12 rounded-lg bg-purple-500/20 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="w-full bg-gray-700/50 rounded-full h-2.5 backdrop-blur-sm">
+                    <div id="memory-progress" class="bg-gradient-to-r from-purple-500 to-blue-500 h-2.5 rounded-full transition-all duration-500 relative overflow-hidden" style="width: 0%">
+                        <div class="absolute inset-0 bg-gradient-to-r from-purple-600/50 to-purple-300/50 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+                <div class="bg-secondary-700/50 rounded-lg p-3 hover:bg-secondary-700/70 transition-all duration-200 group/stat hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10">
+                    <div class="group relative">
+                        <div class="text-sm text-gray-400 group-hover/stat:text-gray-300">Allocated</div>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-300 skeleton-text group-hover/stat:text-purple-300" id="memory-allocated">- MB</div>
+                </div>
+                <div class="bg-secondary-700/50 rounded-lg p-3 hover:bg-secondary-700/70 transition-all duration-200 group/stat hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10">
+                    <div class="group relative">
+                        <div class="text-sm text-gray-400 group-hover/stat:text-gray-300">System</div>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-300 skeleton-text group-hover/stat:text-purple-300" id="memory-system">- MB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Status -->
+        <div class="stats-card group bg-secondary-800/80 backdrop-blur-xl rounded-xl p-6 border border-secondary-700 transform transition-all duration-300 hover:scale-[1.02] hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <div class="group relative">
+                        <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300 transition-colors duration-200">Premium Status</p>
+                    </div>
+                    <p class="text-2xl font-bold text-white mt-1">
+                        <span id="days-remaining" class="skeleton-text">-</span>
+                        <span class="text-sm font-normal text-gray-400">days left</span>
+                    </p>
+                        </div>
+                <div class="h-12 w-12 rounded-lg bg-primary-500/20 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="bg-secondary-700/50 rounded-lg p-3 hover:bg-secondary-700/70 transition-all duration-200 group/stat">
+                <div class="group relative">
+                    <div class="text-sm text-gray-400 group-hover/stat:text-gray-300">Premium Expires</div>
+                </div>
+                <div class="text-sm font-semibold text-gray-300" id="expiry-date">-</div>
+            </div>
+        </div>
+
+        <!-- Points Balance -->
+        <div class="stats-card group bg-secondary-800/80 backdrop-blur-xl rounded-xl p-6 border border-secondary-700 transform transition-all duration-300 hover:scale-[1.02] hover:border-primary-500/50 hover:shadow-xl hover:shadow-primary-500/20">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <div class="group relative">
+                        <p class="text-sm font-medium text-gray-400 group-hover:text-gray-300 transition-colors duration-200">Points Balance</p>
+                    </div>
+                    <div class="flex items-center">
+                        <p class="text-2xl font-bold text-white mt-1">
+                            <span id="points-balance" class="skeleton-text">-</span>
+                            <span class="text-sm font-normal text-gray-400">pts</span>
+                        </p>
+                </div>
+                </div>
+                <div class="h-12 w-12 rounded-lg bg-primary-500/20 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="bg-secondary-700/50 rounded-lg p-3 hover:bg-secondary-700/70 transition-all duration-200 group/stat">
+                <div class="group relative">
+                    <div class="text-sm text-gray-400 group-hover/stat:text-gray-300">Available Premium Time</div>
+                </div>
+                <div class="text-sm font-semibold text-primary-400">
+                    <span class="inline-flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="points-premium-days">-</span>
+                        <span class="text-gray-400 ml-1">days</span>
+                    </span>
+                    <div class="text-xs text-gray-500 mt-1">(1000 points = 30 days)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="group bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 relative overflow-hidden primary-action-card">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="flex items-center justify-between mb-6 relative">
+                <div>
+                    <h3 class="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-300">Jellyfin Library</h3>
+                    <p class="text-sm text-gray-400 mt-1 max-w-xs">Scan your media library to update and index new content in Jellyfin</p>
+                </div>
+                <div class="h-12 w-12 rounded-lg bg-purple-500 bg-opacity-10 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                    </svg>
+                </div>
+            </div>
+            <button onclick="triggerAction('jellyfin_scan')" 
+                    class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 relative overflow-hidden group transform hover:translate-y-[-2px] hover:shadow-lg hover:shadow-purple-500/20"
+                    data-action="jellyfin_scan">
+                <span class="button-content flex items-center">
+                    <span>Scan Library</span>
+                    <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </span>
+                <span class="button-loading absolute inset-0 flex items-center justify-center opacity-0">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+
+        <div class="group bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 relative overflow-hidden primary-action-card">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="flex items-center justify-between mb-6 relative">
+                <div>
+                    <h3 class="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-300">Remount Downloads</h3>
+                    <p class="text-sm text-gray-400 mt-1 max-w-xs">Remount the downloads directory to fix access issues</p>
+                </div>
+                <div class="h-12 w-12 rounded-lg bg-purple-500 bg-opacity-10 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                </div>
+            </div>
+            <button onclick="triggerAction('remount_downloads')" 
+                    class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 relative overflow-hidden group transform hover:translate-y-[-2px] hover:shadow-lg hover:shadow-purple-500/20"
+                    data-action="remount_downloads">
+                <span class="button-content flex items-center">
+                    <span>Remount</span>
+                    <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </span>
+                <span class="button-loading absolute inset-0 flex items-center justify-center opacity-0">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+
+        <div class="group bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 relative overflow-hidden primary-action-card">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="flex items-center justify-between mb-6 relative">
+                <div>
+                    <h3 class="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-300">Reboot Worker Pool</h3>
+                    <p class="text-sm text-gray-400 mt-1 max-w-xs">Restart all worker processes, if you are really having issues</p>
+                </div>
+                <div class="h-12 w-12 rounded-lg bg-purple-500 bg-opacity-10 flex items-center justify-center transform transition-all duration-500 group-hover:rotate-12 group-hover:scale-110">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </div>
+            </div>
+            <button onclick="triggerAction('reboot_worker')" 
+                    class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 relative overflow-hidden group transform hover:translate-y-[-2px] hover:shadow-lg hover:shadow-purple-500/20"
+                    data-action="reboot_worker">
+                <span class="button-content flex items-center">
+                    <span>Reboot Workers</span>
+                    <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </span>
+                <span class="button-loading absolute inset-0 flex items-center justify-center opacity-0">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Recent Logs Section -->
+    <div class="bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-6">
+                <div>
+                <h3 class="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-300">Recent Activity</h3>
+                <p class="text-sm text-gray-400 mt-1">Latest system events and operations</p>
+                </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="updateRecentLogs()" class="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors duration-200">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                </button>
+            </div>
+            </div>
+        <div id="recent-logs" class="space-y-3">
+            <!-- Logs will be populated here -->
+        </div>
+    </div>
+</div>
+
+<style>
+/* Enhanced skeleton loading animation */
+.skeleton-text {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(var(--color-secondary), 0.1) 25%, rgba(var(--color-secondary), 0.2) 50%, rgba(var(--color-secondary), 0.1) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Progress bar animation */
+.mini-progress-bar {
+    transition: width 0.3s ease-in-out;
+}
+
+/* Card hover effects */
+.stats-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.stats-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    padding: 1px;
+    background: linear-gradient(to bottom right, rgba(139, 92, 246, 0.1), rgba(147, 51, 234, 0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: all 0.4s ease;
+}
+
+.stats-card:hover::after {
+    background: linear-gradient(to bottom right, rgba(139, 92, 246, 0.4), rgba(147, 51, 234, 0.2));
+}
+
+.stats-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.15);
+}
+
+/* Button loading state */
+.action-button.loading .button-content {
+    opacity: 0;
+}
+
+.action-button.loading .button-loading {
+    opacity: 1;
+}
+
+/* Success/Error indicators */
+.success-indicator.show,
+.error-indicator.show {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Enhanced progress bar animation */
+@keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+#memory-progress {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+    background-image: linear-gradient(90deg, 
+        rgba(139, 92, 246, 0.8), /* Purple-500 */
+        rgba(147, 51, 234, 0.8), /* Purple-600 */
+        rgba(139, 92, 246, 0.8)  /* Purple-500 */
+    );
+}
+
+/* Enhanced hover effects for stat boxes */
+.bg-secondary-700\/50:hover {
+    backdrop-filter: blur(12px);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+/* Improved text transitions */
+.text-2xl {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover .text-2xl {
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+</style>
+
+<script>
+let notifications = [];
+let unreadCount = 0;
+
+function loadNotifications() {
+    fetch('/activity_logs')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Get the timestamp of the last viewed notification
+                const lastViewedTime = localStorage.getItem('lastViewedTime') || 0;
+                
+                // Update notifications array
+                notifications = data.logs.map(log => ({
+                    id: log.id,
+                    message: log.message,
+                    type: log.type,
+                    timestamp: new Date(log.timestamp).toLocaleTimeString(),
+                    date: new Date(log.timestamp).toLocaleDateString(),
+                    raw_timestamp: new Date(log.timestamp).getTime()
+                }));
+
+                // Count unread notifications (newer than last viewed)
+                unreadCount = notifications.filter(n => n.raw_timestamp > lastViewedTime).length;
+                
+                updateNotificationList();
+                updateNotificationBadge();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading notifications:', error);
+        });
+}
+
+function updateDashboardStats() {
+    fetch('/status')
+        .then(response => response.json())
+        .then(data => {
+            // Helper function to safely update element text content
+            const safeUpdateElement = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            };
+
+            if (data.workers) {
+                safeUpdateElement('total-workers', data.workers.total);
+                safeUpdateElement('running-workers', data.workers.running);
+                safeUpdateElement('free-workers', data.workers.free);
+            }
+
+            if (data.system) {
+                safeUpdateElement('memory-usage', data.system.memory_usage);
+                safeUpdateElement('memory-allocated', data.system.memory_allocation + ' MB');
+                safeUpdateElement('memory-system', data.system.system_memory + ' MB');
+                
+                const memoryProgress = document.getElementById('memory-progress');
+                if (memoryProgress) {
+                    memoryProgress.style.width = `${data.system.memory_usage}%`;
+                }
+            }
+
+            if (data.premium) {
+                safeUpdateElement('days-remaining', data.premium.days_remaining);
+                safeUpdateElement('expiry-date', data.premium.expiry_date);
+            }
+
+            if (data.points) {
+                safeUpdateElement('points-balance', data.points);
+                // Calculate available premium days (1000 points = 30 days)
+                const points = parseInt(data.points) || 0;
+                const availableDays = Math.floor((points / 1000) * 30);
+                safeUpdateElement('points-premium-days', availableDays);
+            }
+
+            // Remove skeleton loading classes
+            document.querySelectorAll('.skeleton-text').forEach(el => {
+                el.classList.remove('skeleton-text');
+            });
+        })
+        .catch(error => {
+            console.error('Error updating dashboard stats:', error);
+        });
+}
+
+function updateRecentLogs() {
+    fetch('/recent_logs')
+        .then(response => response.json())
+        .then(data => {
+            const logsContainer = document.getElementById('recent-logs');
+            if (!data.logs || data.logs.length === 0) {
+                logsContainer.innerHTML = `
+                    <div class="text-center text-gray-400 py-4">
+                        No recent logs available
+                    </div>`;
+                return;
+            }
+
+            logsContainer.innerHTML = data.logs.map(log => `
+                <div class="flex items-center space-x-4 p-3 rounded-lg bg-gray-800 bg-opacity-50">
+                    <div class="flex-shrink-0">
+                        <div class="h-10 w-10 rounded-lg bg-${log.level.toLowerCase()}-500 bg-opacity-20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-${log.level.toLowerCase()}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">
+                            ${log.message}
+                        </p>
+                        <p class="text-sm text-gray-400">
+                            ${log.timestamp}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error updating logs:', error);
+        });
+}
+
+function addNotification(message, type = 'info') {
+    const notification = {
+        id: Date.now(),
+        message,
+        type,
+        timestamp: new Date().toLocaleTimeString(),
+        date: new Date().toLocaleDateString()
+    };
+    
+    notifications.unshift(notification);
+    unreadCount++;
+    updateNotificationList();
+    updateNotificationBadge();
+}
+
+function updateNotificationBadge() {
+    const badge = document.getElementById('notification-badge');
+    if (!badge) return;
+
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function updateNotificationList() {
+    const list = document.getElementById('notification-list');
+    if (!list) return;
+
+    list.innerHTML = notifications.length ? '' : `
+        <div class="p-4 text-center text-gray-400">
+            No notifications
+        </div>
+    `;
+
+    notifications.forEach(notification => {
+        const element = document.createElement('div');
+        element.className = 'p-4 border-b border-gray-800 hover:bg-gray-800/50 transition-colors duration-200';
+        element.innerHTML = `
+            <div class="flex items-start">
+                <div class="flex-shrink-0 mt-0.5">
+                    ${getNotificationIcon(notification.type)}
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="text-sm text-gray-300">${notification.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${notification.date} at ${notification.timestamp}</p>
+                </div>
+            </div>
+        `;
+        list.appendChild(element);
+    });
+}
+
+function getNotificationIcon(type) {
+    const iconClass = 'w-5 h-5';
+    switch (type) {
+        case 'success':
+            return `<svg class="${iconClass} text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>`;
+        case 'error':
+            return `<svg class="${iconClass} text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>`;
+        case 'warning':
+            return `<svg class="${iconClass} text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>`;
+        default:
+            return `<svg class="${iconClass} text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>`;
+    }
+}
+
+// Initialize everything when the DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard stats
+    updateDashboardStats();
+    updateRecentLogs();
+    loadNotifications();  // Load initial notifications
+    
+    // Set up refresh intervals
+    setInterval(updateDashboardStats, 30000);  // Update every 30 seconds
+    setInterval(updateRecentLogs, 60000);      // Update logs every minute
+    setInterval(loadNotifications, 60000);      // Update notifications every minute
+    
+    // Initialize WebSocket connection for activity logs
+    const socket = io();
+    
+    socket.on('activity', function(activity) {
+        // Add the new notification
+        const notification = {
+            id: activity.id,
+            message: activity.message,
+            type: activity.type,
+            timestamp: new Date(activity.timestamp).toLocaleTimeString(),
+            date: new Date(activity.timestamp).toLocaleDateString(),
+            raw_timestamp: new Date(activity.timestamp).getTime()
+        };
+        
+        notifications.unshift(notification);
+        
+        // Only increment unread count if the dropdown is hidden
+        if (notificationDropdown.classList.contains('hidden')) {
+            unreadCount++;
+        }
+        
+        updateNotificationList();
+        updateNotificationBadge();
+    });
+    
+    // Initialize notification system
+    const notificationToggle = document.getElementById('notification-toggle');
+    const notificationDropdown = document.getElementById('notification-dropdown');
+    const notificationList = document.getElementById('notification-list');
+    const notificationBadge = document.getElementById('notification-badge');
+    const clearNotificationsBtn = document.getElementById('clear-notifications');
+    
+    if (notificationToggle && notificationDropdown && notificationList && notificationBadge && clearNotificationsBtn) {
+        // Toggle notification dropdown
+        notificationToggle.addEventListener('click', () => {
+            notificationDropdown.classList.toggle('hidden');
+            if (!notificationDropdown.classList.contains('hidden')) {
+                // Update last viewed time when opening the dropdown
+                localStorage.setItem('lastViewedTime', Date.now());
+                unreadCount = 0;
+                updateNotificationBadge();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!notificationToggle.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+
+        // Clear all notifications
+        clearNotificationsBtn.addEventListener('click', () => {
+            fetch('/clear_notifications', { method: 'POST' })
+                .then(() => {
+                    notifications = [];
+                    unreadCount = 0;
+                    localStorage.setItem('lastViewedTime', Date.now());
+                    updateNotificationList();
+                    updateNotificationBadge();
+                })
+                .catch(error => {
+                    console.error('Error clearing notifications:', error);
+                });
+        });
+    }
+});
+</script>
+{% endblock %} 

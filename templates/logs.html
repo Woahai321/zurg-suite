@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block header %}System Logs{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white">System Logs</h1>
+            <p class="text-gray-400 mt-1">Monitor and analyze system activity in real-time</p>
+        </div>
+        <a href="/dashboard" class="flex items-center text-gray-400 hover:text-white transition-colors duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex flex-col">
+                    <label class="text-sm text-gray-400 mb-1">Log Level</label>
+                    <select id="levelFilter" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        <option value="all">All Levels</option>
+                        <option value="INFO">INFO</option>
+                        <option value="DEBUG">DEBUG</option>
+                        <option value="ERROR">ERROR</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-sm text-gray-400 mb-1">Component</label>
+                    <select id="componentFilter" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        <option value="all">All Components</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-sm text-gray-400 mb-1">Time Range</label>
+                    <select id="timeRangeFilter" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        <option value="all">All Time</option>
+                        <option value="1h">Last Hour</option>
+                        <option value="6h">Last 6 Hours</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div id="customTimeRange" class="hidden flex-col gap-2">
+                    <div class="flex flex-col">
+                        <label class="text-sm text-gray-400 mb-1">From</label>
+                        <input type="datetime-local" id="timeFrom" 
+                               class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm text-gray-400 mb-1">To</label>
+                        <input type="datetime-local" id="timeTo" 
+                               class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-sm text-gray-400 mb-1">Items per page</label>
+                    <select id="perPageSelect" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm text-gray-400 mb-1">Auto-refresh Interval</label>
+                <select id="refreshInterval" class="bg-gray-800 text-white rounded-lg px-3 py-2 border border-gray-700 hover:border-purple-500/50 transition-colors duration-200">
+                    <option value="0">Off</option>
+                    <option value="30000">30 seconds</option>
+                    <option value="60000" selected>1 minute</option>
+                    <option value="300000">5 minutes</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-gray-900 bg-opacity-50 backdrop-blur-lg rounded-xl border border-gray-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-800">
+                <thead class="bg-gray-800 bg-opacity-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Timestamp</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Level</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Component</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Message</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800" id="logsTableBody">
+                    {% if error %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4">
+                            <div class="flex items-center text-red-500">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {{ error }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% elif not logs %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4">
+                            <div class="flex items-center justify-center text-gray-400">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                No logs found
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    {% for log in logs %}
+                    <tr class="log-entry hover:bg-gray-800/50 transition-colors duration-150" data-level="{{ log.level }}" data-component="{{ log.component }}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            <time class="timestamp" data-timestamp="{{ log.raw_timestamp }}" datetime="{{ log.raw_timestamp }}">{{ log.timestamp }}</time>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if log.level == 'INFO' %}bg-blue-100 text-blue-800
+                                {% elif log.level == 'DEBUG' %}bg-gray-100 text-gray-800
+                                {% elif log.level == 'ERROR' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ log.level }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ log.component }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-300">
+                            <div class="max-w-2xl break-words">{{ log.message }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination Controls -->
+        {% if not error and logs and total_pages > 1 %}
+        <div class="px-6 py-4 bg-gray-800 bg-opacity-50 border-t border-gray-800">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-400">
+                    Showing {{ ((current_page - 1) * per_page) + 1 }} to {{ min(current_page * per_page, total_logs) }} of {{ total_logs }} logs (Page {{ current_page }} of {{ total_pages }})
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if current_page > 1 %}
+                    <a href="{{ url_for('view_logs', page=1, per_page=per_page, level=request.args.get('level', 'all'), component=request.args.get('component', 'all')) }}" 
+                       class="px-3 py-2 rounded-lg bg-gray-700 text-white hover:bg-purple-600 transition-colors duration-200"
+                       title="First Page">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </a>
+                    <a href="{{ url_for('view_logs', page=current_page-1, per_page=per_page, level=request.args.get('level', 'all'), component=request.args.get('component', 'all')) }}" 
+                       class="px-3 py-2 rounded-lg bg-gray-700 text-white hover:bg-purple-600 transition-colors duration-200"
+                       title="Previous Page">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    {% for p in range(max(1, current_page-2), min(total_pages+1, current_page+3)) %}
+                    <a href="{{ url_for('view_logs', page=p, per_page=per_page, level=request.args.get('level', 'all'), component=request.args.get('component', 'all')) }}" 
+                       class="px-3 py-2 rounded-lg {% if p == current_page %}bg-purple-600{% else %}bg-gray-700 hover:bg-purple-600{% endif %} text-white transition-colors duration-200">
+                        {{ p }}
+                    </a>
+                    {% endfor %}
+                    
+                    {% if current_page < total_pages %}
+                    <a href="{{ url_for('view_logs', page=current_page+1, per_page=per_page, level=request.args.get('level', 'all'), component=request.args.get('component', 'all')) }}" 
+                       class="px-3 py-2 rounded-lg bg-gray-700 text-white hover:bg-purple-600 transition-colors duration-200"
+                       title="Next Page">
+                        Next
+                    </a>
+                    <a href="{{ url_for('view_logs', page=total_pages, per_page=per_page, level=request.args.get('level', 'all'), component=request.args.get('component', 'all')) }}" 
+                       class="px-3 py-2 rounded-lg bg-gray-700 text-white hover:bg-purple-600 transition-colors duration-200"
+                       title="Last Page">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+let refreshTimer = null;
+
+function formatTimestamp(isoString) {
+    try {
+        const date = new Date(isoString);
+        if (isNaN(date)) {
+            return isoString; // Return original if parsing fails
+        }
+        
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        
+        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    } catch (e) {
+        console.error('Error formatting timestamp:', e);
+        return isoString;
+    }
+}
+
+function updateURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const level = document.getElementById('levelFilter').value;
+    const component = document.getElementById('componentFilter').value;
+    const perPage = document.getElementById('perPageSelect').value;
+    const timeRange = document.getElementById('timeRangeFilter').value;
+    
+    if (level !== 'all') urlParams.set('level', level);
+    else urlParams.delete('level');
+    
+    if (component !== 'all') urlParams.set('component', component);
+    else urlParams.delete('component');
+    
+    if (timeRange !== 'all') {
+        urlParams.set('time_range', timeRange);
+        if (timeRange === 'custom') {
+            const timeFrom = document.getElementById('timeFrom').value;
+            const timeTo = document.getElementById('timeTo').value;
+            if (timeFrom) urlParams.set('time_from', timeFrom);
+            if (timeTo) urlParams.set('time_to', timeTo);
+        }
+    } else {
+        urlParams.delete('time_range');
+        urlParams.delete('time_from');
+        urlParams.delete('time_to');
+    }
+    
+    urlParams.set('per_page', perPage);
+    
+    const newURL = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.pushState({ path: newURL }, '', newURL);
+}
+
+function updateFilters() {
+    const levelFilter = document.getElementById('levelFilter').value;
+    const componentFilter = document.getElementById('componentFilter').value;
+    
+    document.querySelectorAll('.log-entry').forEach(row => {
+        const level = row.getAttribute('data-level');
+        const component = row.getAttribute('data-component');
+        
+        const levelMatch = levelFilter === 'all' || level === levelFilter;
+        const componentMatch = componentFilter === 'all' || component.toLowerCase() === componentFilter;
+        
+        row.style.display = levelMatch && componentMatch ? '' : 'none';
+    });
+    
+    updateURL();
+}
+
+function setupRefreshTimer() {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+    }
+    
+    const interval = parseInt(document.getElementById('refreshInterval').value);
+    if (interval > 0) {
+        refreshTimer = setInterval(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
+        }, interval);
+    }
+}
+
+// Handle per page selection change
+document.getElementById('perPageSelect').addEventListener('change', function() {
+    const perPage = this.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('page', '1');
+    urlParams.set('per_page', perPage);
+    window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
+});
+
+// Setup event listeners
+document.getElementById('levelFilter').addEventListener('change', updateFilters);
+document.getElementById('componentFilter').addEventListener('change', updateFilters);
+document.getElementById('refreshInterval').addEventListener('change', setupRefreshTimer);
+
+// Add time range filter handling
+document.getElementById('timeRangeFilter').addEventListener('change', function() {
+    const customRange = document.getElementById('customTimeRange');
+    if (this.value === 'custom') {
+        customRange.classList.remove('hidden');
+        customRange.classList.add('flex');
+    } else {
+        customRange.classList.add('hidden');
+        customRange.classList.remove('flex');
+    }
+    updateFilters();
+});
+
+document.getElementById('timeFrom').addEventListener('change', updateFilters);
+document.getElementById('timeTo').addEventListener('change', updateFilters);
+
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial filter values from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const level = urlParams.get('level') || 'all';
+    const component = urlParams.get('component') || 'all';
+    const currentPerPage = urlParams.get('per_page') || '50';
+    const timeRange = urlParams.get('time_range') || 'all';
+    
+    document.getElementById('levelFilter').value = level;
+    document.getElementById('perPageSelect').value = currentPerPage;
+    document.getElementById('timeRangeFilter').value = timeRange;
+    
+    if (timeRange === 'custom') {
+        const timeFrom = urlParams.get('time_from');
+        const timeTo = urlParams.get('time_to');
+        if (timeFrom) document.getElementById('timeFrom').value = timeFrom;
+        if (timeTo) document.getElementById('timeTo').value = timeTo;
+        document.getElementById('customTimeRange').classList.remove('hidden');
+        document.getElementById('customTimeRange').classList.add('flex');
+    }
+    
+    // Populate unique components
+    const components = new Set();
+    document.querySelectorAll('.log-entry').forEach(row => {
+        components.add(row.getAttribute('data-component').toLowerCase());
+    });
+
+    const componentFilter = document.getElementById('componentFilter');
+    components.forEach(component => {
+        const option = document.createElement('option');
+        option.value = component;
+        option.textContent = component.charAt(0).toUpperCase() + component.slice(1);
+        componentFilter.appendChild(option);
+    });
+    
+    // Set the component filter after populating options
+    document.getElementById('componentFilter').value = component;
+    
+    setupRefreshTimer();
+    formatAllTimestamps();
+    updateFilters();
+});
+</script>
+{% endblock %} 
