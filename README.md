@@ -1,4 +1,5 @@
-# 🎮 Zurg Suite - Control Your Media Server 🎬
+# 🎮 Zurg Suite 🎬
+![image](https://github.com/user-attachments/assets/91a4491c-3606-4d83-a613-00c093cb1d54)
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/woahai321/zurg-suite?style=for-the-badge&logo=github)
 ![GitHub issues](https://img.shields.io/github/issues/woahai321/zurg-suite?style=for-the-badge&logo=github)
@@ -8,6 +9,11 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
 [![Website](https://img.shields.io/badge/Website-soluify.com-blue?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAABKElEQVQ4jZXTMUoDQRQG4C+7YmFhYSHYWFgIHkAQPICFhYcQBEEQxGNYWHgIC0H0BsELWFhYWAQLC2GzxSzsLrOz2f0hMDDvzXvfzLz3ZkopKKMxxrjHJc7wjjd0UgpfZRYVgbM4P2AevZzEHlZwiU5KYa8QmMUNtnCMh5TCqCR0jgF6eEQfq1jHFfbRxHFKYVQQWMQIZxjGehObeEUH7ZTCJCcYx2Ub99jGEEtYwDnWsIk2LlIK/ZzALK7RwlKsPWMppfAc/m+0UwrTnKCBHt7iZnlp5/GCVkrhKyd4wg5WYv6NTkrhNSdoRd0b2Cg0z0dOcIj9uHnePG/+t/k3wR/kyUNUdQE+UAAAAABJRU5ErkJgg==)](https://soluify.com/)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/company/soluify)
+
+---
+
+## 🎬 Screenshot
+![image](https://github.com/user-attachments/assets/ad0805fe-c377-4aa0-86c3-ec419e6080e9)
 
 ---
 
@@ -35,21 +41,6 @@ Key Features:
 
 ---
 
-## 📚 Quick Links
-
-- [🚀 Installation Guide](#-getting-started)
-- [📋 Configuration Guide](#-configuration)
-- [🛠️ Troubleshooting](#-troubleshooting)
-- [📖 Documentation](docs/)
-
----
-
-## 🎬 Demo
-
-[Demo Screenshot/Video Placeholder]
-
----
-
 <details>
 <summary>How Does It Work?</summary>
 
@@ -66,6 +57,7 @@ Users can perform various operations through the web interface:
 - Reboot workers
 - Scan Jellyfin libraries
 - Monitor system status
+- We use selenium in order to click the buttons and scrape the required information 
 
 #### 3. **Automated Scheduling**
 
@@ -83,6 +75,7 @@ The panel includes a flexible scheduling system for routine operations:
 - **Real-time Monitoring**: Track system status and operation results
 - **Secure Access**: Protected by authentication and HTTPS support
 - **Easy Deployment**: Simple setup with Docker
+- In short, I found the need to remount my downloads whilst outside of my local network & needed a solution, that then got a bit out of hand.
 </details>
 
 ---
